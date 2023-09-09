@@ -6,6 +6,7 @@ public class CollisionDetect : MonoBehaviour
 {
     public bool collided = false;
     public Vector3 normalCollision;
+    public GameObject collisionObject;
     public Dictionary<GameObject,GameObject> cubeCorr = new Dictionary<GameObject, GameObject>();
     // Start is called before the first frame update
 
@@ -24,5 +25,6 @@ public class CollisionDetect : MonoBehaviour
     {
         collided = true;
         normalCollision = collision.contacts[0].normal;
+        collisionObject = collision.collider.gameObject;
     }
 }

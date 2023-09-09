@@ -302,6 +302,9 @@ GameObject:
   - component: {fileID: 456005333544472672}
   - component: {fileID: 182522995939589485}
   - component: {fileID: 1233943675407006516}
+  - component: {fileID: 6299957519566136625}
+  - component: {fileID: 6530091978314166014}
+  - component: {fileID: 8879738772610873558}
   m_Layer: 0
   m_Name: Object 6
   m_TagString: Untagged
@@ -357,6 +360,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collided: 0
+  normalCollision: {x: 0, y: 0, z: 0}
+  collisionObject: {fileID: 0}
+--- !u!65 &6299957519566136625
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456005333544472679}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Size: {x: 1.9, y: 0.9, z: 0.9}
+  m_Center: {x: 0, y: 0.5, z: -0.5}
+--- !u!65 &6530091978314166014
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456005333544472679}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Size: {x: 0.9, y: 0.9, z: 1.9}
+  m_Center: {x: 0.5, y: -0.5, z: 0}
+--- !u!65 &8879738772610873558
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 456005333544472679}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Size: {x: 0.9, y: 1.9, z: 0.9}
+  m_Center: {x: 0.5, y: 0, z: -0.5}
 --- !u!1 &456005334249661472
 GameObject:
   m_ObjectHideFlags: 0
