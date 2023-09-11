@@ -42,6 +42,9 @@ public class GameManager : MonoBehaviour
     private int levelId;
     private string levelName;
     private GameObject LevelManager;
+    public GameObject scoreMusic;
+    public GameObject endMusic;
+    public GameObject origin;
 
     // Start is called before the first frame update
     void Start()
@@ -86,6 +89,9 @@ public class GameManager : MonoBehaviour
         levelId = LevelManager.GetComponent<LevelManager>().levelId;
         levelName = LevelManager.GetComponent<LevelManager>().levelNames[levelId];
         highScore = PlayerPrefs.GetInt(levelName);
+
+        scoreMusic.SetActive(false);
+        endMusic.SetActive(false);
     }
 
     // Update is called once per frame
@@ -141,8 +147,6 @@ public class GameManager : MonoBehaviour
             {
                 if (stoped)
                 {
-                    objectCubeClone.transform.position =
-                        new Vector3(objectCubeClone.transform.position.x, Mathf.Ceil(objectCubeClone.transform.position.y), objectCubeClone.transform.position.z);
                     objectCube.transform.position = objectCubeClone.transform.position + cloneDistance;
                     objectCubeClone.GetComponent<CollisionDetect>().enabled = false;
                     objectCube.GetComponent<CollisionDetect>().enabled = false;
@@ -150,11 +154,13 @@ public class GameManager : MonoBehaviour
                     {
                         cube.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     }
-                    if (TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>()).y < startPointCloneDown.y)
+                    if (TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>()).y < startPointCloneDown.y &&
+                        TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>(), "Max").y + cloneDistance.y < (float)high)
                     {
                         instantiated = false;
                         timer = 0f;
                         playerKey = "0";
+                        scoreMusic.SetActive(false);
                         CalScore();
                     }
                     else
@@ -179,53 +185,53 @@ public class GameManager : MonoBehaviour
                         speedNow = speed;
                     }
 
+                    float angleCamera = origin.GetComponent<CameraController>().angleCamera;
                     if (Input.GetKeyDown(KeyCode.W))
                     {
                         playerKey = "W";
-                        objectCubeClone.transform.Translate(-1f, 0f, 0f, Space.World);
+                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.S))
                     {
                         playerKey = "S";
-                        objectCubeClone.transform.Translate(1f, 0f, 0f, Space.World);
+                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.A))
                     {
                         playerKey = "A";
-                        objectCubeClone.transform.Translate(0f, 0f, -1f, Space.World);
+                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.D))
                     {
                         playerKey = "D";
-                        objectCubeClone.transform.Translate(0f, 0f, 1f, Space.World);
+                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.J))//绕X轴进行逆时针旋转
                     {
                         playerKey = "J";
-                        objectCubeClone.transform.Rotate(90f, 0f, 0f, Space.World);
+                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.K))//绕Z轴进行逆时针旋转
                     {
                         playerKey = "K";
-                        objectCubeClone.transform.Rotate(0f, 0f, 90f, Space.World);
+                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
                     if (Input.GetKeyDown(KeyCode.L))//绕Y轴进行逆时针旋转
                     {
                         playerKey = "L";
-                        objectCubeClone.transform.Rotate(0f, 90f, 0f, Space.World);
+                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
                         timer = 0f;
                     }
 
                     if (objectCubeClone.GetComponent<CollisionDetect>().collided)
                     {
-                        if (Vector3.Angle(objectCubeClone.GetComponent<CollisionDetect>().normalCollision, new Vector3(0f, 1f, 0f)) <= 0.01f
-                            && !DetectOverlap(objectCubeClone))
+                        if (Vector3.Angle(objectCubeClone.GetComponent<CollisionDetect>().normalCollision, new Vector3(0f, 1f, 0f)) <= 0.01f)
                         {
                             //Transform transformStandard = objectCubeClone.GetComponent<CollisionDetect>().collisionObject.transform;
                             //if (transformStandard.parent)
@@ -245,40 +251,37 @@ public class GameManager : MonoBehaviour
                             //    }
                             //}
                             //逻辑上有bug
-                            stoped = true;
+                            Vector3 tempposition = objectCubeClone.transform.position;
+                            objectCubeClone.transform.position = 
+                                new Vector3(objectCubeClone.transform.position.x, Mathf.Ceil(objectCubeClone.transform.position.y), objectCubeClone.transform.position.z);
+                            if (DetectOverlap(objectCubeClone))
+                            {
+                                objectCubeClone.transform.position = tempposition;
+                                if (playerKey == "W" || playerKey == "S" || playerKey == "A" || playerKey == "D")
+                                {
+                                    objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey, -1), Space.World);
+                                }
+                                else if (playerKey == "J" || playerKey == "K" || playerKey == "L")
+                                {
+                                    tipAlpha = 255f;
+                                    objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey, -1), Space.World);
+                                }
+                            }
+                            else
+                            {
+                                stoped = true;
+                            }
                         }
                         else
                         {
-                            if (playerKey == "W")
+                            if (playerKey == "W" || playerKey == "S" || playerKey == "A" || playerKey == "D")
                             {
-                                objectCubeClone.transform.Translate(1f, 0f, 0f, Space.World);
+                                objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey, -1), Space.World);
                             }
-                            else if (playerKey == "S")
-                            {
-                                objectCubeClone.transform.Translate(-1f, 0f, 0f, Space.World);
-                            }
-                            else if (playerKey == "A")
-                            {
-                                objectCubeClone.transform.Translate(0f, 0f, 1f, Space.World);
-                            }
-                            else if (playerKey == "D")
-                            {
-                                objectCubeClone.transform.Translate(0f, 0f, -1f, Space.World);
-                            }
-                            else if (playerKey == "J")//绕X轴进行逆时针旋转
+                            else if (playerKey == "J" || playerKey == "K" || playerKey == "L")
                             {
                                 tipAlpha = 255f;
-                                objectCubeClone.transform.Rotate(-90f, 0f, 0f, Space.World);
-                            }
-                            else if (playerKey == "K")//绕Z轴进行逆时针旋转
-                            {
-                                tipAlpha = 255f;
-                                objectCubeClone.transform.Rotate(0f, 0f, -90f, Space.World);
-                            }
-                            else if (playerKey == "L")//绕Y轴进行逆时针旋转
-                            {
-                                tipAlpha = 255f;
-                                objectCubeClone.transform.Rotate(0f, -90f, 0f, Space.World);
+                                objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey, -1), Space.World);
                             }
                         }
                         objectCubeClone.GetComponent<CollisionDetect>().collided = false;
@@ -302,6 +305,7 @@ public class GameManager : MonoBehaviour
             {
                 panelText.GetComponent<TextMeshPro>().text = "新纪录!";
                 PlayerPrefs.SetInt(levelName, score);
+                endMusic.SetActive(true);
             }
             else
             {
@@ -333,6 +337,7 @@ public class GameManager : MonoBehaviour
                     Destroy(cubeClone.transform.parent.GetComponent<CollisionDetect>().cubeCorr[cubeClone]);
                 }
                 score = score + cubeNum;
+                scoreMusic.SetActive(true);
                 cubeCloneList[i].Clear();
             }
         }
@@ -410,23 +415,161 @@ public class GameManager : MonoBehaviour
         bool overlap = false;
         for(int i = 0; i < 4; i++)
         {
-            RaycastHit[] hits = Physics.RaycastAll(cubeObject.transform.GetChild(i).position, new Vector3(0f, 1f, 0f), 0.1f);
-            if (hits.Length > 0)
+            RaycastHit[] hits = Physics.RaycastAll(cubeObject.transform.GetChild(i).position + new Vector3(0f, 0.5f, 0f), new Vector3(0f, -1f, 0f), 0.5f);
+            if (hits.Length != 1)
             {
-                for (int j = 0; j < hits.Length; j++)
-                {
-                    if (hits[j].collider.gameObject != cubeObject.transform.GetChild(i).gameObject)
-                    {
-                        overlap = true;
-                        break;
-                    }
-                }
-                if (overlap)
-                {
-                    break;
-                }
+                overlap = true;
+                break;
             }
         }
         return overlap;
+    }
+
+    private Vector3 MoveControl(float angleCamera, string playerKey, int reverse = 1)
+    {
+        if (angleCamera >= 0 && angleCamera <= 90)
+        {
+            if (playerKey == "W")
+            {
+                return new Vector3(reverse * -1f, 0f, 0f);
+            }
+            else if (playerKey == "S")
+            {
+                return new Vector3(reverse * 1f, 0f, 0f);
+            }
+            else if (playerKey == "A")
+            {
+                return new Vector3(0f, 0f, reverse * -1f);
+            }
+            else if (playerKey == "D")
+            {
+                return new Vector3(0f, 0f, reverse * 1f);
+            }
+            else if (playerKey == "J")
+            {
+                return new Vector3(reverse * 90f, 0f, 0f);
+            }
+            else if (playerKey == "K")
+            {
+                return new Vector3(0f, 0f, reverse * 90f);
+            }
+            else if (playerKey == "L")
+            {
+                return new Vector3(0f, reverse * 90f, 0f);
+            }
+            else
+            {
+                return new Vector3(0f, 0f, 0f);
+            }
+        }
+        else if (angleCamera > 90 && angleCamera <= 180)
+        {
+            if (playerKey == "A")
+            {
+                return new Vector3(reverse * -1f, 0f, 0f);
+            }
+            else if (playerKey == "D")
+            {
+                return new Vector3(reverse * 1f, 0f, 0f);
+            }
+            else if (playerKey == "S")
+            {
+                return new Vector3(0f, 0f, reverse * -1f);
+            }
+            else if (playerKey == "W")
+            {
+                return new Vector3(0f, 0f, reverse * 1f);
+            }
+            else if (playerKey == "J")
+            {
+                return new Vector3(0f, 0f, reverse * -90f);
+            }
+            else if (playerKey == "K")
+            {
+                return new Vector3(reverse * 90f, 0f, 0f);
+            }
+            else if (playerKey == "L")
+            {
+                return new Vector3(0f, reverse * 90f, 0f);
+            }
+            else
+            {
+                return new Vector3(0f, 0f, 0f);
+            }
+        }
+        else if (angleCamera < 0 && angleCamera >= -90)
+        {
+            if (playerKey == "D")
+            {
+                return new Vector3(reverse * -1f, 0f, 0f);
+            }
+            else if (playerKey == "A")
+            {
+                return new Vector3(reverse * 1f, 0f, 0f);
+            }
+            else if (playerKey == "W")
+            {
+                return new Vector3(0f, 0f, reverse * -1f);
+            }
+            else if (playerKey == "S")
+            {
+                return new Vector3(0f, 0f, reverse * 1f);
+            }
+            else if (playerKey == "J")
+            {
+                return new Vector3(0f, 0f, reverse * 90f);
+            }
+            else if (playerKey == "K")
+            {
+                return new Vector3(reverse * -90f, 0f, 0f);
+            }
+            else if (playerKey == "L")
+            {
+                return new Vector3(0f, reverse * 90f, 0f);
+            }
+            else
+            {
+                return new Vector3(0f, 0f, 0f);
+            }
+        }
+        else if (angleCamera < -90 && angleCamera > -180)
+        {
+            if (playerKey == "S")
+            {
+                return new Vector3(reverse * -1f, 0f, 0f);
+            }
+            else if (playerKey == "W")
+            {
+                return new Vector3(reverse * 1f, 0f, 0f);
+            }
+            else if (playerKey == "D")
+            {
+                return new Vector3(0f, 0f, reverse * -1f);
+            }
+            else if (playerKey == "A")
+            {
+                return new Vector3(0f, 0f, reverse * 1f);
+            }
+            else if (playerKey == "J")
+            {
+                return new Vector3(reverse * -90f, 0f, 0f);
+            }
+            else if (playerKey == "K")
+            {
+                return new Vector3(0f, 0f, reverse * -90f);
+            }
+            else if (playerKey == "L")
+            {
+                return new Vector3(0f, reverse * 90f, 0f);
+            }
+            else
+            {
+                return new Vector3(0f, 0f, 0f);
+            }
+        }
+        else
+        {
+            return new Vector3(0f, 0f, 0f);
+        }
     }
 }

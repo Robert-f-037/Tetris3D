@@ -43,16 +43,17 @@ public class LevelManager : MonoBehaviour
             }
             highScore.Add(PlayerPrefs.GetInt(levelNames[i]));
         }
-        levelNameObject = GameObject.Find("levelName");
-        highScoreObject = GameObject.Find("highScore");
     }
 
     // Update is called once per frame
     void Update()
     {
         scene = SceneManager.GetActiveScene();
+        levelNameObject = GameObject.Find("levelName");
+        highScoreObject = GameObject.Find("highScore");
         if (scene.name == "Start")
         {
+            GetComponent<AudioSource>().enabled = true;
             if (Input.GetKeyDown(KeyCode.A))
             {
                 levelId--;
@@ -74,6 +75,17 @@ public class LevelManager : MonoBehaviour
                 SceneManager.LoadScene("Level" + levelId.ToString());
                 startGame = true;
             }
+            if (Input.GetKeyDown(KeyCode.Delete))
+            {
+                for (int i = 0; i < levelNum; i++)
+                {
+                    PlayerPrefs.SetInt(levelNames[i], 0);
+                }
+            }
+            for (int i = 0; i < levelNum; i++)
+            {
+                highScore[i] = PlayerPrefs.GetInt(levelNames[i]);
+            }
             levelNameObject.GetComponent<TextMeshPro>().text = levelNames[levelId];
             highScoreObject.GetComponent<TextMeshPro>().text = "×î¸ß·Ö:" + highScore[levelId].ToString();
         }
@@ -91,6 +103,11 @@ public class LevelManager : MonoBehaviour
                 {
                     SceneManager.LoadScene("Start");
                 }
+                GetComponent<AudioSource>().enabled = false;
+            }
+            else
+            {
+                GetComponent<AudioSource>().enabled = true;
             }
         }
     }
