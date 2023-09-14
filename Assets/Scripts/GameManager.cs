@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using TMPro;
 
@@ -24,12 +25,16 @@ public class GameManager : MonoBehaviour
     private string playerKey = "0";
     public float timeGap = 0.02f;
     private float timer = 0f;
+    public float timeInput = 0.05f;
+    private float timer2 = 0f;
     private float endPointCloney;
     private bool stoped = false;
     private List<Color32> colorList;
     private List<GameObject>[] cubeCloneList;
     private bool[] eliminated;
-    public int cubeNum = 36;//每层格子数
+    private int cubeNum;//每层格子数
+    public int cubeNumSL = 4;
+    private int cubeNumSLRange;
     public int score;
     public List<GameObject> scoreTexts;
     public GameObject scorePanel;
@@ -75,8 +80,10 @@ public class GameManager : MonoBehaviour
             cubeCloneList[i] = new List<GameObject>();
         }
         eliminated = new bool[high];
+        cubeNum = cubeNumSL * cubeNumSL;
+        cubeNumSLRange = cubeNumSL / 2;
 
-        nextCubeId = Random.Range(0, objectCubes.Count);
+        nextCubeId = UnityEngine.Random.Range(0, objectCubes.Count);
         nextObjectCube = Instantiate(objectCubes[nextCubeId]);
         nextObjectCube.transform.parent = GameObject.Find("Origin").transform;
         nextObjectCube.transform.position = tempPoint;
@@ -108,9 +115,9 @@ public class GameManager : MonoBehaviour
             if (!instantiated)
             {
                 int cubeId = nextCubeId;
-                nextCubeId = Random.Range(0, objectCubes.Count);
-                Vector3 startRotation = startRotations[Random.Range(0, 8)];
-                Color32 colorCube = colorList[Random.Range(0, 6)];
+                nextCubeId = UnityEngine.Random.Range(0, objectCubes.Count);
+                Vector3 startRotation = startRotations[UnityEngine.Random.Range(0, 8)];
+                Color32 colorCube = colorList[UnityEngine.Random.Range(0, 6)];
 
                 Vector3 postposition = nextObjectCube.transform.position;
                 Quaternion postrotation = nextObjectCube.transform.rotation;
@@ -123,7 +130,7 @@ public class GameManager : MonoBehaviour
                 }
 
                 objectCubeClone = Instantiate(objectCubes[cubeId], startPointCloneDown, Quaternion.Euler(startRotation));
-                startPointClone = startPointCloneDown + objectCubeClone.transform.position - TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>());
+                startPointClone = startPointCloneDown + objectCubeClone.transform.position - TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>());
                 objectCubeClone.transform.position = startPointClone;
                 startPoint = startPointClone + cloneDistance;
                 objectCube = Instantiate(objectCubes[cubeId], startPoint, Quaternion.Euler(startRotation));
@@ -154,8 +161,8 @@ public class GameManager : MonoBehaviour
                     {
                         cube.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     }
-                    if (TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>()).y < startPointCloneDown.y &&
-                        TransMinMaxy(objectCubeClone.GetComponentsInChildren<Transform>(), "Max").y + cloneDistance.y < (float)high)
+                    if (TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>()).y < startPointCloneDown.y &&
+                        TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>(), "Max").y + cloneDistance.y < (float)high)
                     {
                         instantiated = false;
                         timer = 0f;
@@ -186,52 +193,15 @@ public class GameManager : MonoBehaviour
                     }
 
                     float angleCamera = origin.GetComponent<CameraController>().angleCamera;
-                    if (Input.GetKeyDown(KeyCode.W))
+                    bool detectRange =
+                        TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>(), "Min", "x").x < -(float)cubeNumSLRange - 0.5f ||
+                        TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>(), "Max", "x").x > (float)cubeNumSLRange + 0.5f ||
+                        TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>(), "Min", "z").z < -(float)cubeNumSLRange - 0.5f ||
+                        TransMinMaxXYZ(objectCubeClone.GetComponentsInChildren<Transform>(), "Max", "z").z > (float)cubeNumSLRange + 0.5f;
+                    if (objectCubeClone.GetComponent<CollisionDetect>().collided || detectRange)
                     {
-                        playerKey = "W";
-                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.S))
-                    {
-                        playerKey = "S";
-                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.A))
-                    {
-                        playerKey = "A";
-                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.D))
-                    {
-                        playerKey = "D";
-                        objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.J))//绕X轴进行逆时针旋转
-                    {
-                        playerKey = "J";
-                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.K))//绕Z轴进行逆时针旋转
-                    {
-                        playerKey = "K";
-                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-                    if (Input.GetKeyDown(KeyCode.L))//绕Y轴进行逆时针旋转
-                    {
-                        playerKey = "L";
-                        objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
-                        timer = 0f;
-                    }
-
-                    if (objectCubeClone.GetComponent<CollisionDetect>().collided)
-                    {
-                        if (Vector3.Angle(objectCubeClone.GetComponent<CollisionDetect>().normalCollision, new Vector3(0f, 1f, 0f)) <= 0.01f)
+                        if (Vector3.Angle(objectCubeClone.GetComponent<CollisionDetect>().normalCollision, new Vector3(0f, 1f, 0f)) <= 0.01f &&
+                            !detectRange)
                         {
                             //Transform transformStandard = objectCubeClone.GetComponent<CollisionDetect>().collisionObject.transform;
                             //if (transformStandard.parent)
@@ -251,9 +221,10 @@ public class GameManager : MonoBehaviour
                             //    }
                             //}
                             //逻辑上有bug
+
                             Vector3 tempposition = objectCubeClone.transform.position;
                             objectCubeClone.transform.position = 
-                                new Vector3(objectCubeClone.transform.position.x, Mathf.Ceil(objectCubeClone.transform.position.y), objectCubeClone.transform.position.z);
+                                new Vector3(objectCubeClone.transform.position.x, Mathf.Round(objectCubeClone.transform.position.y), objectCubeClone.transform.position.z);
                             if (DetectOverlap(objectCubeClone))
                             {
                                 objectCubeClone.transform.position = tempposition;
@@ -266,9 +237,18 @@ public class GameManager : MonoBehaviour
                                     tipAlpha = 255f;
                                     objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey, -1), Space.World);
                                 }
+                                playerKey = "0";
                             }
                             else
                             {
+                                //objectCubeClone.transform.position = 
+                                //    new Vector3(objectCubeClone.transform.position.x, objectCubeClone.transform.position.y - 1, objectCubeClone.transform.position.z);
+                                //if (DetectOverlap(objectCubeClone))
+                                //{
+                                //    objectCubeClone.transform.position =
+                                //        new Vector3(objectCubeClone.transform.position.x, objectCubeClone.transform.position.y + 1, objectCubeClone.transform.position.z);
+                                //    stoped = true;
+                                //}
                                 stoped = true;
                             }
                         }
@@ -283,16 +263,69 @@ public class GameManager : MonoBehaviour
                                 tipAlpha = 255f;
                                 objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey, -1), Space.World);
                             }
+                            playerKey = "0";
                         }
                         objectCubeClone.GetComponent<CollisionDetect>().collided = false;
                     }
+                    else
+                    {
+                        if (Input.GetKeyDown(KeyCode.W) && timer2 >= timeInput && !stoped)
+                        {
+                            playerKey = "W";
+                            objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.S) && timer2 >= timeInput && !stoped)
+                        {
+                            playerKey = "S";
+                            objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.A) && timer2 >= timeInput && !stoped)
+                        {
+                            playerKey = "A";
+                            objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.D) && timer2 >= timeInput && !stoped)
+                        {
+                            playerKey = "D";
+                            objectCubeClone.transform.Translate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.J) && timer2 >= timeInput && !stoped)//绕X轴进行逆时针旋转
+                        {
+                            playerKey = "J";
+                            objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.K) && timer2 >= timeInput && !stoped)//绕Z轴进行逆时针旋转
+                        {
+                            playerKey = "K";
+                            objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                        if (Input.GetKeyDown(KeyCode.L) && timer2 >= timeInput && !stoped)//绕Y轴进行逆时针旋转
+                        {
+                            playerKey = "L";
+                            objectCubeClone.transform.Rotate(MoveControl(angleCamera, playerKey), Space.World);
+                            timer = 0f;
+                            timer2 = 0f;
+                        }
+                    }
                     timer += Time.deltaTime;
+                    timer2 += Time.deltaTime;
                     if (timer >= timeGap)
                     {
                         objectCube.transform.position = objectCubeClone.transform.position + cloneDistance;
                         objectCube.transform.rotation = objectCubeClone.transform.rotation;
                         timer = 0;
-                        playerKey = "0";
                     }
                 }
             }
@@ -305,12 +338,12 @@ public class GameManager : MonoBehaviour
             {
                 panelText.GetComponent<TextMeshPro>().text = "新纪录!";
                 PlayerPrefs.SetInt(levelName, score);
-                endMusic.SetActive(true);
             }
             else
             {
                 panelText.GetComponent<TextMeshPro>().text = "失败";
             }
+            endMusic.SetActive(true);
         }
     }
 
@@ -373,40 +406,96 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private Vector3 TransMinMaxy(Transform[] transforms, string index = "Min", Transform transformStandard = null)
+    private Vector3 TransMinMaxXYZ(Transform[] transforms, string index = "Min", string axis = "y", Transform transformStandard = null)
     {
         int num = transforms.Length;
-        float[] vectorys = new float[num];
-        for(int i = 0; i < num; i++)
+        float[] vectors = new float[num];
+        for(int i = 1; i < num; i++)
         {
             if (transformStandard == null)
             {
-                vectorys[i] = transforms[i].position.y;
-            }
-            else
-            {
-                if (Mathf.Abs(transforms[i].position.x - transformStandard.position.x) <= 0.01f && 
-                    Mathf.Abs(transforms[i].position.z - transformStandard.position.z) <= 0.01f)
+                if (axis == "y")
                 {
-                    vectorys[i] = transforms[i].position.y;
+                    vectors[i] = transforms[i].position.y;
+                }
+                else if (axis == "x")
+                {
+                    vectors[i] = transforms[i].position.x;
+                }
+                else if (axis == "z")
+                {
+                    vectors[i] = transforms[i].position.z;
                 }
                 else
                 {
-                    vectorys[i] = transformStandard.position.y;
+                    vectors[i] = transforms[i].position.y;
+                }
+            }
+            else
+            {
+                if (axis == "y")
+                {
+                    if (Mathf.Abs(transforms[i].position.x - transformStandard.position.x) <= 0.01f &&
+                        Mathf.Abs(transforms[i].position.z - transformStandard.position.z) <= 0.01f)
+                    {
+                        vectors[i] = transforms[i].position.y;
+                    }
+                    else
+                    {
+                        vectors[i] = transformStandard.position.y;
+                    }
+                }
+                else if (axis == "x")
+                {
+                    if (Mathf.Abs(transforms[i].position.y - transformStandard.position.y) <= 0.01f && 
+                        Mathf.Abs(transforms[i].position.z - transformStandard.position.z) <= 0.01f)
+                    {
+                        vectors[i] = transforms[i].position.x;
+                    }
+                    else
+                    {
+                        vectors[i] = transformStandard.position.x;
+                    }
+                }
+                else if (axis == "z")
+                {
+                    if (Mathf.Abs(transforms[i].position.y - transformStandard.position.y) <= 0.01f &&
+                        Mathf.Abs(transforms[i].position.x - transformStandard.position.x) <= 0.01f)
+                    {
+                        vectors[i] = transforms[i].position.z;
+                    }
+                    else
+                    {
+                        vectors[i] = transformStandard.position.z;
+                    }
+                }
+                else
+                {
+                    if (Mathf.Abs(transforms[i].position.x - transformStandard.position.x) <= 0.01f && 
+                        Mathf.Abs(transforms[i].position.z - transformStandard.position.z) <= 0.01f)
+                    {
+                        vectors[i] = transforms[i].position.y;
+                    }
+                    else
+                    {
+                        vectors[i] = transformStandard.position.y;
+                    }
                 }
             }
         }
+        float[] trueVectors = new float[num - 1];
+        Array.Copy(vectors, 1, trueVectors, 0, num - 1);
         if (index == "Min")
         {
-            return new Vector3(0f, Mathf.Min(vectorys) - 0.5f, 0f);
+            return new Vector3(Convert.ToSingle(axis == "x"), Convert.ToSingle(axis == "y"), Convert.ToSingle(axis == "z")) * (Mathf.Min(trueVectors) - 0.5f);
         }
         else if (index == "Max")
         {
-            return new Vector3(0f, Mathf.Max(vectorys) + 0.5f, 0f);
+            return new Vector3(Convert.ToSingle(axis == "x"), Convert.ToSingle(axis == "y"), Convert.ToSingle(axis == "z")) * (Mathf.Max(trueVectors) + 0.5f);
         }
         else
         {
-            return new Vector3(0f, Mathf.Min(vectorys) - 0.5f, 0f);
+            return new Vector3(Convert.ToSingle(axis == "x"), Convert.ToSingle(axis == "y"), Convert.ToSingle(axis == "z")) * (Mathf.Min(trueVectors) - 0.5f);
         }
     }
 
